@@ -21,7 +21,7 @@ public class WebServer {
         this.tasksThread = new Thread() {
             @Override
             public void run() {
-                //very stupid i know
+                //bad place
                 for(;;) {
                     if(!tasksQueue.isEmpty()) {
                         Task task = tasksQueue.poll();
@@ -58,7 +58,7 @@ public class WebServer {
                     //System.out.println(line);
                     lines.add(line);
                 }
-                //it is stupid too
+                //bad place
                 if (lines.size() == 0) {
                     continue;
                 }
