@@ -1,11 +1,13 @@
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-enum Type { GET, POST }
+enum RequestType { GET, POST }
 
 public class Request {
-    public Type type;
-    public HashMap<String, String> params;
+
+    private RequestType type;
+    private HashMap<String, String> params;
+    private String body = null;
 
     public Request() {
         params = new HashMap<>();
@@ -15,11 +17,7 @@ public class Request {
         Request request = new Request();
         StringTokenizer tokenizer = new StringTokenizer(line, " ");
         String strType = tokenizer.nextToken();
-        if (strType.equals("GET")) {
-            request.type = Type.GET;
-        } else if (strType.equals("POST")) {
-            request.type = Type.POST;
-        }
+        request.type = extractType(strType);
         String url = tokenizer.nextToken();
         tokenizer = new StringTokenizer(url, "/?&=");
         while(tokenizer.hasMoreTokens()) {
@@ -28,5 +26,25 @@ public class Request {
             request.params.put(key, value);
         }
         return request;
+    }
+
+    private static RequestType extractType(String type) {
+        return switch (type) {
+            case "GET" -> RequestType.GET;
+            case "POST" -> RequestType.POST;
+            default -> null;
+        };
+    }
+
+    public RequestType getType() {
+        return type;
+    }
+
+    public HashMap<String, String> getParams() {
+        return params;
+    }
+
+    public String getBody() {
+        return body;
     }
 }

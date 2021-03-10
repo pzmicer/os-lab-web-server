@@ -1,22 +1,22 @@
-import java.math.BigInteger;
-
-enum Status {QUEUED, PROCESSING, DONE }
-
-public class Task {
-
-    private Status status;
-    private BigInteger result;
-    private int number;
+public abstract class Task {
 
     private static int ID = 0;
+    protected int id;
+    protected Status status;
 
-    public static int getID() {
+    public abstract String getJsonResult();
+    public abstract void solve();
+
+    Task() {
+        id = getNextID();
+    }
+
+    public static int getNextID() {
         return ID++;
     }
 
-    public Task(int number) {
-        this.number = number;
-        this.status = Status.QUEUED;
+    public int getId() {
+        return id;
     }
 
     public Status getStatus() {
@@ -25,21 +25,5 @@ public class Task {
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    public BigInteger getResult() {
-        return result;
-    }
-
-    public void setResult(BigInteger result) {
-        this.result = result;
-    }
-
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
     }
 }
