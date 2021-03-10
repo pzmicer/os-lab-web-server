@@ -2,31 +2,31 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class Controller {
 
     private final int THREAD_COUNT = 4;
 
-    private ConcurrentLinkedQueue<Task> tasksQueue;
+    private LinkedBlockingDeque<Task> tasksQueue;
     private ConcurrentHashMap<Integer, Task> tasksMap;
 
-    //multithreading is ready (i hope) but not turned on
     private ArrayList<TaskThread> taskThreads;
     private TaskThread tasksThread;
 
     public Controller() {
-        this.tasksQueue = new ConcurrentLinkedQueue<>();
+        this.tasksQueue = new LinkedBlockingDeque<>();
         this.tasksMap = new ConcurrentHashMap<>();
         this.taskThreads = new ArrayList<>();
-        this.tasksThread = new TaskThread();
-        /*for(int i = 0; i < THREAD_COUNT; i++)
-            taskThreads.add(new TaskThread());*/
+        //this.tasksThread = new TaskThread();
+        for(int i = 0; i < THREAD_COUNT; i++)
+            taskThreads.add(new TaskThread());
     }
 
     public void startThreads() {
-        tasksThread.start();
-        /*for(TaskThread thread : taskThreads)
-            thread.start();*/
+        //tasksThread.start();
+        for(TaskThread thread : taskThreads)
+            thread.start();
     }
 
     public String factorialController(Request request) {
@@ -46,7 +46,7 @@ public class Controller {
                 return task.getJsonResult();
             }
         } else {
-            return "Error: No such id found";
+            return "Error: invalid ID";
         }
     }
 
@@ -54,13 +54,13 @@ public class Controller {
         @Override
         public void run() {
             for(;;) {
-                if (!tasksQueue.isEmpty()) {
-                    Task task = tasksQueue.poll();
+                try {
+                    Task task = tasksQueue.take();
                     task.setStatus(Status.PROCESSING);
                     task.solve();
                     task.setStatus(Status.DONE);
-                } else {
-                   //TODO wait()
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         }

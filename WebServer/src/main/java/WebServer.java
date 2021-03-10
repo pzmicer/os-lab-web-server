@@ -14,6 +14,7 @@ public class WebServer {
     public void start() {
         try (ServerSocket server = new ServerSocket(8080)) {
             controller.startThreads();
+            System.out.println("Server started.");
             for (;;) {
                 Socket client = server.accept();
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
