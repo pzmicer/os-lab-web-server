@@ -1,6 +1,7 @@
 public abstract class Task {
 
     private static int ID = 0;
+
     protected int id;
     protected Status status;
 
@@ -9,10 +10,6 @@ public abstract class Task {
 
     Task() {
         id = getNextID();
-    }
-
-    public static int getNextID() {
-        return ID++;
     }
 
     public int getId() {
@@ -25,5 +22,9 @@ public abstract class Task {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public static int getNextID() {
+        return ID++;
     }
 }

@@ -10,6 +10,7 @@ public class Controller {
     private ConcurrentLinkedQueue<Task> tasksQueue;
     private ConcurrentHashMap<Integer, Task> tasksMap;
 
+    //multithreading is ready (i hope) but not turned on
     private ArrayList<TaskThread> taskThreads;
     private TaskThread tasksThread;
 
@@ -17,14 +18,15 @@ public class Controller {
         this.tasksQueue = new ConcurrentLinkedQueue<>();
         this.tasksMap = new ConcurrentHashMap<>();
         this.taskThreads = new ArrayList<>();
-        /*for(int i = 0; i < THREAD_COUNT; i++) {
-            taskThreads.add(new TaskThread());
-        }*/
         this.tasksThread = new TaskThread();
+        /*for(int i = 0; i < THREAD_COUNT; i++)
+            taskThreads.add(new TaskThread());*/
     }
 
     public void startThreads() {
         tasksThread.start();
+        /*for(TaskThread thread : taskThreads)
+            thread.start();*/
     }
 
     public String factorialController(Request request) {

@@ -9,7 +9,6 @@ public class WebServer {
 
     public WebServer() {
         this.controller = new Controller();
-
     }
 
     public void start() {
@@ -33,7 +32,7 @@ public class WebServer {
                         break;
                     lines.add(line);
                 }
-                //bad place
+                //TODO something
                 if (lines.size() == 0) {
                     continue;
                 }
