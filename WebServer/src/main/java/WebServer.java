@@ -1,59 +1,64 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.net.SocketException;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class WebServer {
 
     private Controller controller;
+    private ExecutorService executorService = Executors.newFixedThreadPool(2);
+    private ServerSocket server;
+    private Thread consoleThread;
 
     public WebServer() {
         this.controller = new Controller();
     }
 
     public void start() {
-        try (ServerSocket server = new ServerSocket(8080)) {
+        try {
+            server = new ServerSocket(8080);
             controller.startThreads();
             System.out.println("Server started.");
-            for (;;) {
-                Socket client = server.accept();
-                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                PrintWriter out = new PrintWriter(client.getOutputStream());
-
-                // Start sending our reply, using the HTTP 1.1 protocol
-                out.print("HTTP/1.1 200 \r\n"); // Version & status code
-                out.print("Content-RequestType: text/plain\r\n"); // The type of data
-                out.print("Connection: close\r\n"); // Will close stream
-                out.print("\r\n"); // End of headers
-
-                String line;
-                ArrayList<String> lines = new ArrayList<>();
-                while ((line = in.readLine()) != null) {
-                    if (line.length() == 0)
-                        break;
-                    lines.add(line);
-                }
-                //TODO something
-                if (lines.size() == 0) {
-                    continue;
-                }
-                Request request = Request.parse(lines.get(0));
-                if (request.getType() == RequestType.GET) {
-                    out.println(controller.checkController(request));
-                } else if (request.getType() == RequestType.POST) {
-                    switch (request.getParams().get("controller")) {
-                        case "factorial_task" -> {
-                            out.println(controller.factorialController(request));
+            consoleThread = new Thread() {
+                @Override
+                public void run() {
+                    Scanner scanner = new Scanner(System.in);
+                    String serverCommand;
+                    while(scanner.hasNextLine()) {
+                        serverCommand = scanner.nextLine();
+                        if (serverCommand.equals("quit")) {
+                            System.out.println("Server closed.");
+                            //System.exit(0);
+                            WebServer.this.stop();
+                            break;
                         }
-                        default -> out.println("Error 404");
                     }
                 }
-                out.close();
-                in.close();
-                client.close();
+            };
+            consoleThread.start();
+            while(!server.isClosed()) { //for (;;) {
+                Socket client = server.accept();
+                executorService.execute(new MonoRequestHandler(client, controller));
+                //new MonoRequestHandler(client, controller).run();
             }
+            executorService.shutdown();
         } catch (IOException e) {
-            e.printStackTrace();
+            if (!(e instanceof SocketException))
+                e.printStackTrace();
+        }
+    }
+
+    //doesn't work. ASK
+    public void stop() {
+        try {
+            controller.stopThreads();
+            server.close();
+            executorService.shutdown();
+        } catch (IOException ignored) {
+
         }
     }
 }

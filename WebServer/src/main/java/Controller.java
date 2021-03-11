@@ -29,6 +29,12 @@ public class Controller {
             thread.start();
     }
 
+    public void stopThreads() {
+        for(TaskThread thread : taskThreads)
+            thread.stopThread();
+
+    }
+
     public String factorialController(Request request) {
         FactorialTask task = new FactorialTask(Integer.parseInt(request.getParams().get("number")));
         tasksQueue.add(task);
@@ -51,9 +57,12 @@ public class Controller {
     }
 
     private class TaskThread extends Thread {
+
+        private boolean exit = false;
+
         @Override
         public void run() {
-            for(;;) {
+            while(!exit) {
                 try {
                     Task task = tasksQueue.take();
                     task.setStatus(Status.PROCESSING);
@@ -63,6 +72,10 @@ public class Controller {
                     e.printStackTrace();
                 }
             }
+        }
+
+        public void stopThread() {
+            exit = true;
         }
     }
 }
