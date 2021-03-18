@@ -1,4 +1,6 @@
-public abstract class Task {
+enum Status { QUEUED, PROCESSING, DONE }
+
+public abstract class Task implements Runnable {
 
     private static int ID = 0;
 
@@ -26,5 +28,12 @@ public abstract class Task {
 
     public static int getNextID() {
         return ID++;
+    }
+
+    @Override
+    public void run() {
+        status = Status.PROCESSING;
+        solve();
+        status = Status.DONE;
     }
 }

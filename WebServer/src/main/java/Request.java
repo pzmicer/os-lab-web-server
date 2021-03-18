@@ -1,7 +1,6 @@
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-enum RequestType { GET, POST }
 
 public class Request {
 

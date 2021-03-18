@@ -3,8 +3,6 @@ import org.json.JSONObject;
 
 import java.math.BigInteger;
 
-enum Status { QUEUED, PROCESSING, DONE }
-
 public class FactorialTask extends Task {
 
     private int number;

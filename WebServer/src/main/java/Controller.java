@@ -1,48 +1,27 @@
 import org.json.JSONObject;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ExecutorService;
 
 public class Controller {
 
-    private final int THREAD_COUNT = 4;
-
-    private LinkedBlockingDeque<Task> tasksQueue;
     private ConcurrentHashMap<Integer, Task> tasksMap;
 
-    private ArrayList<TaskThread> taskThreads;
-    private TaskThread tasksThread;
+    ExecutorService service;
 
-    public Controller() {
-        this.tasksQueue = new LinkedBlockingDeque<>();
+    public Controller(ExecutorService service) {
+        this.service = service;
         this.tasksMap = new ConcurrentHashMap<>();
-        this.taskThreads = new ArrayList<>();
-        //this.tasksThread = new TaskThread();
-        for(int i = 0; i < THREAD_COUNT; i++)
-            taskThreads.add(new TaskThread());
     }
 
-    public void startThreads() {
-        //tasksThread.start();
-        for(TaskThread thread : taskThreads)
-            thread.start();
-    }
-
-    public void stopThreads() {
-        for(TaskThread thread : taskThreads)
-            thread.stopThread();
-
-    }
-
+    @ControllerMethod(type=RequestType.POST, name="factorial_task")
     public String factorialController(Request request) {
         FactorialTask task = new FactorialTask(Integer.parseInt(request.getParams().get("number")));
-        tasksQueue.add(task);
-        task.setStatus(Status.QUEUED);
         tasksMap.put(task.getId(), task);
+        service.execute(task);
         return new JSONObject().put("id", task.getId()).toString();
     }
 
+    @ControllerMethod(type=RequestType.GET, name="check")
     public String checkController(Request request) {
         Task task;
         if ((task = tasksMap.get(Integer.parseInt(request.getParams().get("id")))) != null) {
@@ -53,29 +32,6 @@ public class Controller {
             }
         } else {
             return "Error: invalid ID";
-        }
-    }
-
-    private class TaskThread extends Thread {
-
-        private boolean exit = false;
-
-        @Override
-        public void run() {
-            while(!exit) {
-                try {
-                    Task task = tasksQueue.take();
-                    task.setStatus(Status.PROCESSING);
-                    task.solve();
-                    task.setStatus(Status.DONE);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        public void stopThread() {
-            exit = true;
         }
     }
 }

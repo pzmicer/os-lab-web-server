@@ -2,8 +2,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 
 public class MonoRequestHandler implements Runnable {
 
@@ -40,21 +43,27 @@ public class MonoRequestHandler implements Runnable {
             }
             System.out.println(lines.get(0));
             Request request = Request.parse(lines.get(0));
-            if (request.getType() == RequestType.GET) {
-                out.println(controller.checkController(request));
-            } else if (request.getType() == RequestType.POST) {
-                switch (request.getParams().get("controller")) {
-                    case "factorial_task" -> {
-                        out.println(controller.factorialController(request));
-                    }
-                    default -> out.println("Error 404");
-                }
-            }
+            out.println(findController(request));
             out.close();
             in.close();
             client.close();
-        } catch (IOException e) {
+        } catch (IOException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
+    }
+
+    private String findController(Request request) throws InvocationTargetException, IllegalAccessException {
+        Class<?> clazz = controller.getClass();
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(ControllerMethod.class)) {
+                var annotation = method.getAnnotation(ControllerMethod.class);
+                if (annotation.name().equals(request.getParams().get("controller")) &&
+                    annotation.type() == request.getType()) {
+                    method.setAccessible(true);
+                    return (String) method.invoke(controller, request);
+                }
+            }
+        }
+        return "Error 404";
     }
 }
