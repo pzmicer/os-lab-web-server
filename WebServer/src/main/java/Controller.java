@@ -1,37 +1,37 @@
 import org.json.JSONObject;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+
+import java.util.concurrent.*;
 
 public class Controller {
 
-    private ConcurrentHashMap<Integer, Task> tasksMap;
+    private final ConcurrentHashMap<Integer, Future<Task>> tasksMap;
+    private final ExecutorService service;
 
-    ExecutorService service;
-
-    public Controller(ExecutorService service) {
-        this.service = service;
+    public Controller(ExecutorService taskService) {
+        this.service = taskService;
         this.tasksMap = new ConcurrentHashMap<>();
     }
 
     @ControllerMethod(type=RequestType.POST, name="factorial_task")
-    public String factorialController(Request request) {
+    public Response factorialController(Request request) {
         FactorialTask task = new FactorialTask(Integer.parseInt(request.getParams().get("number")));
-        tasksMap.put(task.getId(), task);
-        service.execute(task);
-        return new JSONObject().put("id", task.getId()).toString();
+        tasksMap.put(task.getId(), service.submit((Callable<Task>) task));
+        return new Response(new JSONObject().put("id", task.getId()));
     }
 
     @ControllerMethod(type=RequestType.GET, name="check")
-    public String checkController(Request request) {
-        Task task;
+    public Response checkController(Request request) {
+        Future<Task> task;
         if ((task = tasksMap.get(Integer.parseInt(request.getParams().get("id")))) != null) {
-            if (task.getStatus() != Status.DONE) {
-                return new JSONObject().put("status", task.getStatus().name()).toString();
-            } else {
-                return task.getJsonResult();
+            if (!task.isDone()) {
+                return new Response(new JSONObject().put("status", Status.PROCESSING.name()));
             }
-        } else {
-            return "Error: invalid ID";
+            try {
+                return new Response(task.get().getJsonResult());
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
         }
+        return new Response("Error: invalid ID");
     }
 }

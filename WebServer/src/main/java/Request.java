@@ -1,20 +1,25 @@
+import lombok.Getter;
+import lombok.Setter;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-
+@Getter @Setter
 public class Request {
 
     private RequestType type;
     private HashMap<String, String> params;
-    private String body = null;
+    private JSONObject body;
 
-    public Request() {
+    public Request(JSONObject body) {
         params = new HashMap<>();
+        this.body = body;
     }
 
-    public static Request parse(String line) {
-        Request request = new Request();
-        StringTokenizer tokenizer = new StringTokenizer(line, " ");
+    public static Request parse(String firstLine) {
+        Request request = new Request(null);
+        StringTokenizer tokenizer = new StringTokenizer(firstLine, " ");
         String strType = tokenizer.nextToken();
         request.type = extractType(strType);
         String url = tokenizer.nextToken();
@@ -33,17 +38,5 @@ public class Request {
             case "POST" -> RequestType.POST;
             default -> null;
         };
-    }
-
-    public RequestType getType() {
-        return type;
-    }
-
-    public HashMap<String, String> getParams() {
-        return params;
-    }
-
-    public String getBody() {
-        return body;
     }
 }

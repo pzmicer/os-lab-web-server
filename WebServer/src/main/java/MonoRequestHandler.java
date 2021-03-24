@@ -6,12 +6,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
 
 public class MonoRequestHandler implements Runnable {
 
-    Socket client;
-    Controller controller;
+    private final Socket client;
+    private final Controller controller;
 
     public MonoRequestHandler(Socket client, Controller controller) {
         this.client = client;
@@ -20,39 +19,37 @@ public class MonoRequestHandler implements Runnable {
 
     @Override
     public void run() {
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            PrintWriter out = new PrintWriter(client.getOutputStream());
-
-            // Start sending our reply, using the HTTP 1.1 protocol
-            out.print("HTTP/1.1 200 \r\n"); // Version & status code
-            out.print("Content-RequestType: text/plain\r\n"); // The type of data
-            out.print("Connection: close\r\n"); // Will close stream
-            out.print("\r\n"); // End of headers
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+             PrintWriter out = new PrintWriter(client.getOutputStream())) {
 
             String line;
             ArrayList<String> lines = new ArrayList<>();
-            while (in.ready() && (line = in.readLine()) != null) {
+            while ((line = in.readLine()) != null) {
                 if (line.length() == 0)
                     break;
                 lines.add(line);
             }
-            //TODO something
-            if (lines.size() == 0) {
-                return;//continue
+            //TODO int contentLength = new StringTokenizer(lines.get(lines.size()-1), " ")
+            if (lines.size() == 0 || lines.get(0) == null) {
+                throw new Exception();
             }
             System.out.println(lines.get(0));
             Request request = Request.parse(lines.get(0));
             out.println(findController(request));
-            out.close();
-            in.close();
-            client.close();
+            out.flush();
         } catch (IOException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
+        } catch (Exception ignored) { }
+        finally {
+            try {
+                client.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private String findController(Request request) throws InvocationTargetException, IllegalAccessException {
+    private Response findController(Request request) throws InvocationTargetException, IllegalAccessException {
         Class<?> clazz = controller.getClass();
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.isAnnotationPresent(ControllerMethod.class)) {
@@ -60,10 +57,10 @@ public class MonoRequestHandler implements Runnable {
                 if (annotation.name().equals(request.getParams().get("controller")) &&
                     annotation.type() == request.getType()) {
                     method.setAccessible(true);
-                    return (String) method.invoke(controller, request);
+                    return (Response) method.invoke(controller, request);
                 }
             }
         }
-        return "Error 404";
+        return new Response("Error 404");
     }
 }

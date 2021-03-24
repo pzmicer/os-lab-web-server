@@ -1,8 +1,11 @@
 import com.google.common.math.BigIntegerMath;
+import lombok.Getter;
+import lombok.Setter;
 import org.json.JSONObject;
 
 import java.math.BigInteger;
 
+@Getter @Setter
 public class FactorialTask extends Task {
 
     private int number;
@@ -13,27 +16,12 @@ public class FactorialTask extends Task {
         this.number = number;
     }
 
-    public BigInteger getResult() {
-        return result;
-    }
-
-    public void setResult(BigInteger result) {
-        this.result = result;
-    }
-
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
-    }
-
     @Override
-    public String getJsonResult() {
+    public JSONObject getJsonResult() {
         return new JSONObject()
+                .put("task", "factorial")
                 .put("result", result)
-                .put("number", number).toString();
+                .put("number", number);
     }
 
     @Override
